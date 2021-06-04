@@ -20,7 +20,7 @@ AlwaysBuild( prg )
 
 upload = env.Alias("upload", prg, [ 
     env.VerboseAction("$UPLOADCMD", "Uploading..."),
-    env.VerboseAction("", "  DONE"),
+    env.VerboseAction("", ""),
 ])
 AlwaysBuild( upload )    
 
