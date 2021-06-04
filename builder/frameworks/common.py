@@ -115,7 +115,8 @@ def dev_compiler(env, application_name = 'APPLICATION'):
             join("$PROJECT_DIR", "include"),
             join( env.framework_dir, "wizio", "pico"),
             join( env.framework_dir, "wizio", "newlib"),
-            join( env.framework_dir, env.sdk, "include" ),
+            join( env.framework_dir, env.sdk, "include"),
+            join( env.framework_dir, env.sdk, "cmsis", "include"), #
         ],
         CPPDEFINES = [
             "NDEBUG",
@@ -144,7 +145,8 @@ def dev_compiler(env, application_name = 'APPLICATION'):
         CFLAGS = [
             cortex,
             "-Wno-discarded-qualifiers",
-            "-Wno-ignored-qualifiers"
+            "-Wno-ignored-qualifiers",
+            "-Wno-attributes", #
         ],
         CXXFLAGS = [
             "-fno-rtti",
