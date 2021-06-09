@@ -4,8 +4,6 @@
 * **Version: 1.0.9** The project is a work in progress and is **very beta version** - there may be bugs...
 * [Look here, if there is something new](https://github.com/Wiz-IO/wizio-pico/wiki#last-news) 
 * This project is based on [**PICO-SDK**](https://github.com/raspberrypi/pico-sdk)
-* **Systems support**
-* * Windows, Linux, Darwin
 * **PICO-SDK** _( the file organization has been restructured to be flexible and have a fast compilation )_
 * * ver 1.2.0 release ( **default** ) **not tested** ... if bugs - add issue or switch to SDK112
 * **Frameworks**
@@ -21,6 +19,9 @@
 * [Baremetal Examples](https://github.com/Wiz-IO/wizio-pico-examples/tree/main/baremetal)
 * [Arduino Examples](https://github.com/Wiz-IO/wizio-pico-examples/tree/main/arduino)
 * [Video demo - Arduino - TFT ST7789](https://www.youtube.com/watch?v=x8Z4btIwf7M)
+* **Systems support**
+* * Windows, Linux, Darwin
+
 
 **Notes**
 * Please [Re-Install](https://github.com/Wiz-IO/wizio-pico/blob/main/README.md#fast-uninstal--reinstal--do-this-and-install-again) the platform. The project is a work in progress and the platform is installed from here...
