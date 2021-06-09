@@ -7,7 +7,7 @@
 * **Systems support**
 * * Windows, Linux, Darwin
 * **PICO-SDK** _( the file organization has been restructured to be flexible and have a fast compilation )_
-* * ver 1.2.0 release ( **default** ) ( **not tested** ) is bugs - issue or shitch to SDK112
+* * ver 1.2.0 release ( **default** ) **not tested**  is bugs - issue or shitch to SDK112
 * **Frameworks**
 * * Baremetal ( pico-sdk, C/C++ ) _baremetal is just a name for pico-sdk here_
 * * Arduino ( in progress... )
