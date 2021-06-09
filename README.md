@@ -1,13 +1,13 @@
 ## Raspberry Pi Pico RP2040 - PlatformIO ( Pico-SDK & Arduino )
 
 **A few words in the beginning**
-* **Version: 1.0.8** The project is a work in progress and is **very beta version** - there may be bugs...
+* **Version: 1.0.9** The project is a work in progress and is **very beta version** - there may be bugs...
 * [Look here, if there is something new](https://github.com/Wiz-IO/wizio-pico/wiki#last-news) 
 * This project is based on [**PICO-SDK**](https://github.com/raspberrypi/pico-sdk)
 * **Systems support**
 * * Windows, Linux, Darwin
 * **PICO-SDK** _( the file organization has been restructured to be flexible and have a fast compilation )_
-* * ver 1.1.2 release ( **default** ) ( **1.2.0 soon - testing** )
+* * ver 1.2.0 release ( **default** ) ( **not tested** ) is bugs - issue or shitch to SDK112
 * **Frameworks**
 * * Baremetal ( pico-sdk, C/C++ ) _baremetal is just a name for pico-sdk here_
 * * Arduino ( in progress... )
