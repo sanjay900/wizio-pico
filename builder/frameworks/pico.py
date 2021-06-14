@@ -211,19 +211,21 @@ def add_ops(env):
             "-Wl,-wrap,putchar",
         ])
 
-    if "PICO_STDIO_USB" in env.get("CPPDEFINES") or "PICO_STDIO_UART" in env.get("CPPDEFINES") or "PICO_STDIO_SEMIHOSTING" in env.get("CPPDEFINES"):
+    if "PICO_STDIO_USB"  in env.get("CPPDEFINES") or "LIB_PICO_STDIO_USB"  in env.get("CPPDEFINES") or \
+       "PICO_STDIO_UART" in env.get("CPPDEFINES") or "LIB_PICO_STDIO_UART" in env.get("CPPDEFINES") or \
+       "PICO_STDIO_SEMIHOSTING" in env.get("CPPDEFINES") or "LIB_PICO_STDIO_SEMIHOSTING" in env.get("CPPDEFINES"):
         env.BuildSources( join(OBJ_DIR, "pico_stdio"), join(LIB_DIR, "pico_stdio") )
 
-    if "PICO_STDIO_USB" in env.get("CPPDEFINES"):
-        print(tab, 'PICO_STDIO_USB')
-        env.BuildSources( join(OBJ_DIR, "pico_stdio_usb"), join(LIB_DIR, "pico_stdio_usb") )
+    if "PICO_STDIO_USB" in env.get("CPPDEFINES") or "LIB_PICO_STDIO_USB" in env.get("CPPDEFINES"):
+        print(tab, '* STDIO USB')
+        env.BuildSources( join(OBJ_DIR, "pico_stdio_usb"), join(LIB_DIR, "pico_stdio_usb") )        
 
-    if "PICO_STDIO_UART" in env.get("CPPDEFINES"):
-        print(tab, 'PICO_STDIO_UART')
+    if "PICO_STDIO_UART" in env.get("CPPDEFINES") or "LIB_PICO_STDIO_UART" in env.get("CPPDEFINES"):
+        print(tab, '* STDIO UART')
         env.BuildSources( join(OBJ_DIR, "pico_stdio_uart"), join(LIB_DIR, "pico_stdio_uart") )
 
-    if "PICO_STDIO_SEMIHOSTING" in env.get("CPPDEFINES"):
-        print(tab, 'PICO_STDIO_SEMIHOSTING')
+    if "PICO_STDIO_SEMIHOSTING" in env.get("CPPDEFINES") or "LIB_PICO_STDIO_SEMIHOSTING" in env.get("CPPDEFINES"):
+        print(tab, '* STDIO SEMIHOSTING')
         env.BuildSources( join(OBJ_DIR, "pico_stdio_semihosting"), join(LIB_DIR, "pico_stdio_semihosting") )
 
     env.Append( LINKFLAGS = [
@@ -242,7 +244,7 @@ def add_tinyusb(env):
             print('  * USB          : tinyusb')
             break
 
-    if "PICO_STDIO_USB" in env.get("CPPDEFINES"):
+    if "PICO_STDIO_USB" in env.get("CPPDEFINES") or "LIB_PICO_STDIO_USB" in env.get("CPPDEFINES"):
         env.BuildSources( OBJ_DIR, USB_DIR, src_filter = [ "-<*>", "+<device>", "+<class/cdc>" ]  )
         return
 
