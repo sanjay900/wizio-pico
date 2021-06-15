@@ -107,6 +107,7 @@ def dev_compiler(env, application_name = 'APPLICATION'):
     else:
         print('  * STACK        :', stack_size)
         print('  * HEAP         :', env.heap_size)
+    fix_old_new_stdio(env)
     env.Append(
         ASFLAGS=[ cortex, "-x", "assembler-with-cpp" ],
         CPPPATH = [
@@ -234,3 +235,4 @@ def dev_finalize(env):
     add_sdk(env)
     env.Append(LIBS = env.libs)
     print()
+    print(env["CPPDEFINES"])
