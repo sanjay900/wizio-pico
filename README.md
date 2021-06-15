@@ -5,7 +5,8 @@
 * [Look here, if there is something new](https://github.com/Wiz-IO/wizio-pico/wiki#last-news) 
 * This project is based on [**PICO-SDK**](https://github.com/raspberrypi/pico-sdk)
 * **PICO-SDK** _( the file organization has been restructured to be flexible and have a fast compilation )_
-* * ver 1.2.0 release ( **default** ) **not tested** ... if bugs - add issue or switch to SDK112
+* * ver 1.2.0 release ( **default** ) 
+* * _ATT: some #define keys is renamed to LIB_PICO_foo. Please read Pico SDK documentation or ask in PI forum_
 * **Frameworks**
 * * Baremetal ( pico-sdk, C/C++ ) _baremetal is just a name for pico-sdk here_
 * * Arduino ( in progress... )
