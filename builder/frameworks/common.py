@@ -235,4 +235,4 @@ def dev_finalize(env):
     add_sdk(env)
     env.Append(LIBS = env.libs)
     print()
-    print(env["CPPDEFINES"])
+
