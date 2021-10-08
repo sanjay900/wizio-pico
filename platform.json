@@ -36,8 +36,9 @@
         "version": "https://github.com/Wiz-IO/framework-wizio-pico.git"
     },
     "toolchain-gccarmnoneeabi": {
+        "owner": "platformio",
         "type": "toolchain",
-        "version": "=1.70201.0"
+        "version": "~1.70201.0"
     },
     "tool-wizio-pico": {
         "type": "uploader",
