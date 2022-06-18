@@ -253,25 +253,24 @@ def add_ops(env):
         "-Wl,-wrap,free",
     ])
 
+
 def add_tinyusb(env):
     OBJ_DIR = join( "$BUILD_DIR", env.platform, env.sdk, "pico", "usb" )
     USB_DIR = join( env.framework_dir, env.sdk, "lib", "tinyusb", "src" )
+
     for define in env.get("CPPDEFINES"):
-        if "_USB" in define:
+        if "USB" in define:
             env.Append( CPPDEFINES = [ "CFG_TUSB_MCU=OPT_MCU_RP2040", "CFG_TUSB_OS=OPT_OS_PICO" ], CPPPATH = [ USB_DIR ]  )
-            env.BuildSources( OBJ_DIR, USB_DIR, src_filter = [ "+<*>", "-<host>", "-<device>", "-<class>" ] )
-            print('  * TINYUSB')
+            if "PICO_USB_HOST" in env.get("CPPDEFINES"): 
+                #[ini] build_flags = -D PICO_USB_HOST       
+                print('  * TINYUSB      : HOST')
+                env.BuildSources( OBJ_DIR, USB_DIR, src_filter = [ "+<*>", "-<device>", "+<class>" ] )
+            else: 
+                #[ini] build_flags = -D PICO_USB_DEVICE       
+                print('  * TINYUSB      : DEVICE')        
+                env.BuildSources( OBJ_DIR, USB_DIR, src_filter = [ "+<*>", "-<host>", "+<class>" ] )            
             break
 
-    if "PICO_STDIO_USB" in env.get("CPPDEFINES") or "LIB_PICO_STDIO_USB" in env.get("CPPDEFINES"):
-        env.BuildSources( OBJ_DIR, USB_DIR, src_filter = [ "-<*>", "+<device>", "+<class/cdc>" ]  )
-        return
-
-    # TODO SELECT HOST/DEVICE CLASS
-    if "PICO_USB" in env.get("CPPDEFINES"):
-        env.BuildSources( OBJ_DIR, USB_DIR,
-            src_filter = [ "-<*>", "+<device>", "+<class>" ]
-        )
 
 def add_sdk(env):
     add_ops(env)
