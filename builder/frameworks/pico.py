@@ -236,15 +236,15 @@ def add_ops(env):
         env.BuildSources( join(OBJ_DIR, "pico_stdio"), join(LIB_DIR, "pico_stdio") )
 
     if "PICO_STDIO_USB" in env.get("CPPDEFINES"):
-        print(tab, '* STDIO USB')
+        print(tab, 'STDIO        : USB')
         env.BuildSources( join(OBJ_DIR, "pico_stdio_usb"), join(LIB_DIR, "pico_stdio_usb") )        
 
     if "PICO_STDIO_UART" in env.get("CPPDEFINES"):
-        print(tab, '* STDIO UART')
+        print(tab, 'STDIO        : UART')
         env.BuildSources( join(OBJ_DIR, "pico_stdio_uart"), join(LIB_DIR, "pico_stdio_uart") )
 
     if "PICO_STDIO_SEMIHOSTING" in env.get("CPPDEFINES"):
-        print(tab, '* STDIO SEMIHOSTING')
+        print(tab, 'STDIO        : SEMIHOSTING')
         env.BuildSources( join(OBJ_DIR, "pico_stdio_semihosting"), join(LIB_DIR, "pico_stdio_semihosting") )
 
     env.Append( LINKFLAGS = [
@@ -257,16 +257,15 @@ def add_ops(env):
 def add_tinyusb(env):
     OBJ_DIR = join( "$BUILD_DIR", env.platform, env.sdk, "pico", "usb" )
     USB_DIR = join( env.framework_dir, env.sdk, "lib", "tinyusb", "src" )
-
     for define in env.get("CPPDEFINES"):
         if "USB" in define:
             env.Append( CPPDEFINES = [ "CFG_TUSB_MCU=OPT_MCU_RP2040", "CFG_TUSB_OS=OPT_OS_PICO" ], CPPPATH = [ USB_DIR ]  )
-            if "PICO_USB_HOST" in env.get("CPPDEFINES"): 
-                #[ini] build_flags = -D PICO_USB_HOST       
+            if "PICO_USB_HOST" in define: 
+                #[ini] build_flags = -D PICO_USB_HOST ... load lib as host      
                 print('  * TINYUSB      : HOST')
                 env.BuildSources( OBJ_DIR, USB_DIR, src_filter = [ "+<*>", "-<device>", "+<class>" ] )
             else: 
-                #[ini] build_flags = -D PICO_USB_DEVICE       
+                #[ini] build_flags = -D PICO_USB_DEVICE / PICO_STDIO_USB ... load lib as device      
                 print('  * TINYUSB      : DEVICE')        
                 env.BuildSources( OBJ_DIR, USB_DIR, src_filter = [ "+<*>", "-<host>", "+<class>" ] )            
             break
