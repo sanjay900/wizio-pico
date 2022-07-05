@@ -16,5 +16,6 @@ def dev_init(env, platform):
         CPPDEFINES = [ "BAREMETAL" ],
         CPPPATH    = [ join(env.framework_dir, env.sdk, "boards"), ]
     )
+    config_board(env)
     dev_finalize(env)
 

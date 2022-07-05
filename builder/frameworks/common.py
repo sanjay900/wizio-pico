@@ -237,3 +237,41 @@ def dev_finalize(env):
     env.Append(LIBS = env.libs)
     print()
 
+def config_board(env):
+    src = join(env.PioPlatform().get_package_dir("framework-wizio-pico"), "templates")
+    dst = do_mkdir( env.subst("$PROJECT_DIR"), "include" )
+
+    env.variant = env.BoardConfig().get("build.variant", 'raspberry-pi-pico')
+
+    ### default pico board
+    if env.variant == "raspberry-pi-pico": 
+        print("  * VARIANT      : PICO DEFAULT BOARD")
+        return
+
+    ### pico w board
+    if env.variant == "raspberry-pi-pico-w":
+        print("  * VARIANT      : PICO WIFI BOARD")
+
+        do_copy(src, dst, "lwipopts.h")
+
+        env.Append(
+            CPPDEFINES = [ "PICO_W", ],
+            CPPPATH = [
+                join( env.framework_dir, env.sdk, "lib", "lwip", "src", "include" ),
+                join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src" ),
+                join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "firmware" ),
+            ],            
+        )
+
+        filter = [ "-<*>",
+            "+<pico/pico_cyw43_arch>",
+            "+<pico/pico_lwip>",
+        ]
+        NET_DIR = join( "$BUILD_DIR", env.platform, env.sdk, "network" )
+        env.BuildSources( NET_DIR, join(env.framework_dir, env.sdk), src_filter = filter )
+
+        LWIP_DIR = join( "$BUILD_DIR", env.platform, "lwip" )
+        env.BuildSources( LWIP_DIR, join( env.framework_dir, env.sdk, "lib", "lwip", "src", "core" ),  )
+
+        WIFI_DIR = join( "$BUILD_DIR", env.platform, "cyw43-driver" )
+        env.BuildSources( WIFI_DIR, join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src" ),  )
