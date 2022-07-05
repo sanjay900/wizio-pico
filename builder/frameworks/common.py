@@ -74,6 +74,7 @@ def dev_nano(env):
 
 def dev_compiler(env, application_name = 'APPLICATION'):
     env.sdk = env.BoardConfig().get("build.sdk", "SDK") # get/set default SDK
+    env.variant = env.BoardConfig().get("build.variant", 'raspberry-pi-pico')
     print()
     print( Fore.BLUE + "%s RASPBERRYPI PI PICO RP2040 ( PICO - %s )" % (env.platform.upper(), env.sdk.upper()) )
     env.Replace(
@@ -241,8 +242,6 @@ def config_board(env):
     src = join(env.PioPlatform().get_package_dir("framework-wizio-pico"), "templates")
     dst = do_mkdir( env.subst("$PROJECT_DIR"), "include" )
 
-    env.variant = env.BoardConfig().get("build.variant", 'raspberry-pi-pico')
-
     ### default pico board
     if env.variant == "raspberry-pi-pico": 
         print("  * VARIANT      : PICO DEFAULT BOARD")
@@ -263,10 +262,7 @@ def config_board(env):
             ],            
         )
 
-        filter = [ "-<*>",
-            "+<pico/pico_cyw43_arch>",
-            "+<pico/pico_lwip>",
-        ]
+        filter = [ "-<*>", "+<pico/pico_cyw43_arch>", "+<pico/pico_lwip>", ]
         NET_DIR = join( "$BUILD_DIR", env.platform, env.sdk, "network" )
         env.BuildSources( NET_DIR, join(env.framework_dir, env.sdk), src_filter = filter )
 
