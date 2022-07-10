@@ -251,10 +251,10 @@ def config_board(env):
     if env.variant == "raspberry-pi-pico-w":
         print("  * VARIANT      : PICO WIFI BOARD")
 
-        do_copy(src, dst, "lwipopts.h")
+        do_copy(src, dst, "lwipopts.h") # for user edit
 
         env.Append(
-            CPPDEFINES = [ "PICO_W", ],
+            CPPDEFINES = [ "PICO_W", 'CYW43_SPI_PIO', 'CYW43_USE_SPI' ],
             CPPPATH = [
                 join( env.framework_dir, env.sdk, "lib", "lwip", "src", "include" ),
                 join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src" ),
@@ -262,12 +262,57 @@ def config_board(env):
             ],            
         )
 
-        filter = [ "-<*>", "+<pico/pico_cyw43_arch>", "+<pico/pico_lwip>", ]
-        NET_DIR = join( "$BUILD_DIR", env.platform, env.sdk, "network" )
-        env.BuildSources( NET_DIR, join(env.framework_dir, env.sdk), src_filter = filter )
+        ### pico wifi support
+        filter = [ "-<*>", 
+            "+<pico/pico_cyw43_arch>", 
+            "+<pico/pico_lwip>", 
+        ]
+        env.BuildSources( 
+            join( "$BUILD_DIR", env.platform, env.sdk, "network" ), 
+            join(env.framework_dir, env.sdk), 
+            src_filter = filter )
 
-        LWIP_DIR = join( "$BUILD_DIR", env.platform, "lwip" )
-        env.BuildSources( LWIP_DIR, join( env.framework_dir, env.sdk, "lib", "lwip", "src", "core" ),  )
 
-        WIFI_DIR = join( "$BUILD_DIR", env.platform, "cyw43-driver" )
-        env.BuildSources( WIFI_DIR, join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src" ),  )
+        ### TODO LWIP
+        filter = [ "-<*>", 
+            "+<api>",
+            "+<core>",
+            "+<netif>",                  
+        ]
+        env.BuildSources( 
+            join( "$BUILD_DIR", env.platform, "lwip" ),
+            join( env.framework_dir, env.sdk, "lib", "lwip", "src" ), 
+            src_filter = filter 
+        )
+
+        ### wifi driver
+        filter = [ "+<*>", "-<cyw43_sdio.c>", ] # remove sdio driver
+        env.BuildSources( 
+            join( "$BUILD_DIR", env.platform, "cyw43-driver" ), 
+            join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src" ), 
+            src_filter = filter  
+        )
+        env.Append( # add wifi firmware as library  
+            LIBPATH = [ join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src" ) ],
+            LIBS    = ['wifi_firmware'] 
+        )
+
+  
+"""
+Precompile firmware bin to firmware object/library
+
+LINK https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/cyw43_driver/CMakeLists.txt  
+
+"PATH/arm-none-eabi-objcopy" ^
+-I binary -O elf32-littlearm -B arm ^
+--readonly-text ^
+--rename-section .data=.big_const,contents,alloc,load,readonly,data ^
+--redefine-sym _binary_43439A0_7_95_49_00_combined_start=fw_43439A0_7_95_49_00_start ^
+--redefine-sym _binary_43439A0_7_95_49_00_combined_end=fw_43439A0_7_95_49_00_end ^
+--redefine-sym _binary_43439A0_7_95_49_00_combined_size=fw_43439A0_7_95_49_00_size ^
+43439A0-7.95.49.00.combined ^
+wifi_firmware.o
+
+PATH/arm-none-eabi-ar rc libwifi_firmware.a wifi_firmware.o
+
+"""
