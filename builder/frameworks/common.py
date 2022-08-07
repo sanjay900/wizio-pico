@@ -263,20 +263,16 @@ def config_board(env):
 
         ### pico wifi support
         env.BuildSources( 
-            join( "$BUILD_DIR", env.platform, env.sdk, "wifi" ), 
+            join( "$BUILD_DIR", "wifi", "pico" ), 
             join(env.framework_dir, env.sdk), 
             [ "-<*>", "+<pico/pico_cyw43_arch>", "+<pico/pico_lwip>", ]
         )
 
         ### wifi spi driver & firmware
         env.BuildSources( 
-            join( "$BUILD_DIR", env.platform, env.sdk, "wifi" , "cyw43-driver" ), 
+            join( "$BUILD_DIR", "wifi" , "cyw43-driver" ), 
             join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src" ), 
             [ "+<*>", "-<cyw43_sdio.c>", ] # remove sdio driver  
-        )
-        env.Append( # add wifi firmware as library  
-            LIBPATH = [ join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src" ) ],
-            LIBS    = ['wifi_firmware'] 
         )
 
         ### LWIP: for add other files, use PRE:SCRIPT.PY
@@ -293,5 +289,40 @@ def config_board(env):
             join( "$BUILD_DIR", env.platform, "lwip", "netif" ),
             join( env.framework_dir, env.sdk, "lib", "lwip", "src", "netif" ), 
             [ "-<*>", "+<ethernet.c>", ]
+        )        
+
+        ### wifi firmware object
+        """
+        BUILD_DIR = env.subst( "$BUILD_DIR" )
+        do_mkdir( BUILD_DIR, "wifi" )
+        do_mkdir( join( BUILD_DIR, "wifi" ), "firmware" )
+        WIFI_FIRMWARE_DIR = join( BUILD_DIR, "wifi", "firmware" )
+        WIFI_FIRMWARE_OBJ = join( WIFI_FIRMWARE_DIR, "wifi_firmware.o" ) 
+        WIFI_FIRMWARE_BIN = join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "firmware", "43439A0-7.95.49.00.combined" )
+        old_name = WIFI_FIRMWARE_BIN
+        old_name = '_binary_' + old_name.replace('\\', '_').replace('/', '_').replace('.', '_').replace(':', '_').replace('-', '_')
+        cmd = [ "$OBJCOPY", "-I", "binary", "-O", "elf32-littlearm", "-B", "arm", "--readonly-text",
+                "--rename-section", ".data=.big_const,contents,alloc,load,readonly,data",
+                "--redefine-sym", old_name + "_start=fw_43439A0_7_95_49_00_start",
+                "--redefine-sym", old_name + "_end=fw_43439A0_7_95_49_00_end",
+                "--redefine-sym", old_name + "_size=fw_43439A0_7_95_49_00_size",
+                WIFI_FIRMWARE_BIN, # SOURCE BIN
+                WIFI_FIRMWARE_OBJ  # TARGET OBJ
+        ]
+        env.AddPreAction( 
+                join( "$BUILD_DIR", "wifi" , "cyw43-driver", "cyw43_bus_pio_spi.o" ), # TRIGER
+                env.VerboseAction(" ".join(cmd), "Compiling wifi/firmware/wifi_firmware.o") 
+        )       
+        print( "  * WIFI         : Firmware Object" )
+        env.Append( LINKFLAGS = [ WIFI_FIRMWARE_OBJ ] )
+        return
+        """
+        ### use pre-compiled wifi_firmware.o
+        env.Append( LINKFLAGS = [ join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src", "wifi_firmware.o" ) ] ) 
+        return
+        ### use pre-compiled libwifi_firmware.a
+        print( "  * WIFI         : Firmware Library" )
+        env.Append( # AS LIB
+            LIBPATH = [ join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src" ) ], 
+            LIBS = ['wifi_firmware'] 
         )
-        
