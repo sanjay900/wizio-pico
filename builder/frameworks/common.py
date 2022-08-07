@@ -250,7 +250,6 @@ def config_board(env):
     ### pico w board
     if env.variant == "raspberry-pi-pico-w":
         print("  * VARIANT      : PICO WIFI BOARD")
-
         do_copy(src, dst, "lwipopts.h") # for user edit
 
         env.Append(
@@ -263,56 +262,36 @@ def config_board(env):
         )
 
         ### pico wifi support
-        filter = [ "-<*>", 
-            "+<pico/pico_cyw43_arch>", 
-            "+<pico/pico_lwip>", 
-        ]
         env.BuildSources( 
-            join( "$BUILD_DIR", env.platform, env.sdk, "network" ), 
+            join( "$BUILD_DIR", env.platform, env.sdk, "wifi" ), 
             join(env.framework_dir, env.sdk), 
-            src_filter = filter )
-
-
-        ### TODO LWIP
-        filter = [ "-<*>", 
-            "+<api>",
-            "+<core>",
-            "+<netif>",                  
-        ]
-        env.BuildSources( 
-            join( "$BUILD_DIR", env.platform, "lwip" ),
-            join( env.framework_dir, env.sdk, "lib", "lwip", "src" ), 
-            src_filter = filter 
+            [ "-<*>", "+<pico/pico_cyw43_arch>", "+<pico/pico_lwip>", ]
         )
 
-        ### wifi driver
-        filter = [ "+<*>", "-<cyw43_sdio.c>", ] # remove sdio driver
+        ### wifi spi driver & firmware
         env.BuildSources( 
-            join( "$BUILD_DIR", env.platform, "cyw43-driver" ), 
+            join( "$BUILD_DIR", env.platform, env.sdk, "wifi" , "cyw43-driver" ), 
             join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src" ), 
-            src_filter = filter  
+            [ "+<*>", "-<cyw43_sdio.c>", ] # remove sdio driver  
         )
         env.Append( # add wifi firmware as library  
             LIBPATH = [ join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src" ) ],
             LIBS    = ['wifi_firmware'] 
         )
 
-  
-"""
-Precompile firmware bin to firmware object/library
-
-LINK https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/cyw43_driver/CMakeLists.txt  
-
-"PATH/arm-none-eabi-objcopy" ^
--I binary -O elf32-littlearm -B arm ^
---readonly-text ^
---rename-section .data=.big_const,contents,alloc,load,readonly,data ^
---redefine-sym _binary_43439A0_7_95_49_00_combined_start=fw_43439A0_7_95_49_00_start ^
---redefine-sym _binary_43439A0_7_95_49_00_combined_end=fw_43439A0_7_95_49_00_end ^
---redefine-sym _binary_43439A0_7_95_49_00_combined_size=fw_43439A0_7_95_49_00_size ^
-43439A0-7.95.49.00.combined ^
-wifi_firmware.o
-
-PATH/arm-none-eabi-ar rc libwifi_firmware.a wifi_firmware.o
-
-"""
+        ### LWIP: for add other files, use PRE:SCRIPT.PY
+        env.BuildSources( 
+            join( "$BUILD_DIR", env.platform, "lwip", "api" ),
+            join( env.framework_dir, env.sdk, "lib", "lwip", "src", "api" ), 
+        )
+        env.BuildSources( 
+            join( "$BUILD_DIR", env.platform, "lwip", "core" ),
+            join( env.framework_dir, env.sdk, "lib", "lwip", "src", "core" ), 
+            [ "+<*>",  "-<ipv6>", ] # remove ipv6
+        )
+        env.BuildSources( 
+            join( "$BUILD_DIR", env.platform, "lwip", "netif" ),
+            join( env.framework_dir, env.sdk, "lib", "lwip", "src", "netif" ), 
+            [ "-<*>", "+<ethernet.c>", ]
+        )
+        
