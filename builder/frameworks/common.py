@@ -313,11 +313,12 @@ def config_board(env):
                 join( "$BUILD_DIR", "wifi" , "cyw43-driver", "cyw43_bus_pio_spi.o" ), # TRIGER
                 env.VerboseAction(" ".join(cmd), "Compiling wifi/firmware/wifi_firmware.o") 
         )       
-        print( "  * WIFI         : Firmware Object" )
+        print( "  * WIFI         : Compile Firmware Object" )
         env.Append( LINKFLAGS = [ WIFI_FIRMWARE_OBJ ] )
         return
         """
         ### use pre-compiled wifi_firmware.o
+        print( "  * WIFI         : Firmware Object" )
         env.Append( LINKFLAGS = [ join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src", "wifi_firmware.o" ) ] ) 
         return
         ### use pre-compiled libwifi_firmware.a
