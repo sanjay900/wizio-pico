@@ -1,14 +1,15 @@
-# WizIO 2021 Georgi Angelov
+# WizIO 2022 Georgi Angelov
 #   http://www.wizio.eu/
 #   https://github.com/Wiz-IO/wizio-pico
 
+from distutils.log import error
 import os
-from os.path import join, normpath, basename
+from os.path import join
 from shutil import copyfile
 from colorama import Fore
 from pico import *
 from uf2conv import dev_uploader
-from SCons.Script import DefaultEnvironment, Builder, ARGUMENTS
+from SCons.Script import Builder
 
 bynary_type_info = []
 
@@ -27,12 +28,12 @@ def do_mkdir(path, name):
     return dir
 
 def ini_file(env):
-    ini = join(env.subst("$PROJECT_DIR"), 'platformio.ini')
+    ini = join( env.subst("$PROJECT_DIR"), 'platformio.ini' )
     f = open(ini, "r")
     txt = f.read()
     f.close()
     f = open(ini, "a+")
-    if 'monitor_port'  not in txt: f.write("\n;monitor_port = SERIAL_PORT\n")
+    if 'monitor_port'  not in txt: f.write("\n;monitor_port = SELECT SERIAL PORT\n")
     if 'monitor_speed' not in txt: f.write(";monitor_speed = 115200\n")
     if 'build_flags'   not in txt: f.write("\n;build_flags = \n")
     if 'lib_deps'      not in txt: f.write("\n;lib_deps = \n")
@@ -53,8 +54,19 @@ def dev_create_template(env):
     if 'APPLICATION'== env.get("PROGNAME"):
         if "fatfs" in env.GetProjectOption("lib_deps", []):
             do_copy(src, dst, "ffconf.h")
+
         dst = do_mkdir( env.subst("$PROJECT_DIR"), join("include", "pico") )
-        do_copy(src, dst, "config_autogen.h" )
+        #do_copy(src, dst, "config_autogen.h" )
+        autogen_filename = join(dst, "config_autogen.h")
+        if False == os.path.isfile( autogen_filename ):
+            default_board = "pico.h"
+            autogen_board = env.BoardConfig().get("build.autogen_board", default_board )
+            if autogen_board != default_board:
+                f = open(autogen_filename, "w")
+                f.write("/* SELECT OTHER BOARD */\n")
+                f.write('#include "boards/{}"\n'.format(autogen_board))
+                f.close()
+
         dst = join(env.subst("$PROJECT_DIR"), "src")
         if False == os.path.isfile( join(dst, "main.cpp") ):
             do_copy(src, dst, "main.c" )
@@ -238,18 +250,17 @@ def dev_finalize(env):
     env.Append(LIBS = env.libs)
     print()
 
-def config_board(env):
+def dev_config_board(env):
     src = join(env.PioPlatform().get_package_dir("framework-wizio-pico"), "templates")
     dst = do_mkdir( env.subst("$PROJECT_DIR"), "include" )
 
-    ### default pico board
-    if env.variant == "raspberry-pi-pico": 
-        print("  * VARIANT      : PICO DEFAULT BOARD")
-        return
+    WIFI = env.BoardConfig().get("build.autogen_board", False )
 
+    if False == WIFI: 
+        print("  * WIFI         : NO")
+        return
     ### pico w board
-    if env.variant == "raspberry-pi-pico-w":
-        print("  * VARIANT      : PICO WIFI BOARD")
+    else:
         do_copy(src, dst, "lwipopts.h") # for user edit
 
         env.Append(
@@ -327,3 +338,4 @@ def config_board(env):
             LIBPATH = [ join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src" ) ], 
             LIBS = ['wifi_firmware'] 
         )
+

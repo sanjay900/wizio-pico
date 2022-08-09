@@ -1,4 +1,4 @@
-# WizIO 2021 Georgi Angelov
+# WizIO 2022 Georgi Angelov
 #   http://www.wizio.eu/
 #   https://github.com/Wiz-IO/wizio-pico
 
@@ -26,7 +26,7 @@ def dev_init(env, platform):
         LIBPATH        = [ join(PLATFORM_DIR, "libraries", core) ],
     )
 
-    config_board(env)
+    dev_config_board(env)
 
     OBJ_DIR = join( "$BUILD_DIR", platform, "arduino" )
     env.BuildSources( join( OBJ_DIR, "arduino" ), join( PLATFORM_DIR, platform )  )
