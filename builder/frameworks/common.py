@@ -14,8 +14,10 @@ from SCons.Script import Builder
 bynary_type_info = []
 
 def do_copy(src, dst, name):
-    if False == os.path.isfile( join(dst, name) ):
-        copyfile( join(src, name), join(dst, name) )
+    file_name = join(dst, name)
+    if False == os.path.isfile( file_name ):
+        copyfile( join(src, name), file_name )
+    return file_name
 
 def do_mkdir(path, name):
     dir = join(path, name)
@@ -27,16 +29,19 @@ def do_mkdir(path, name):
             exit(1)
     return dir
 
-def ini_file(env):
+def ini_file(env): # add defaut keys
     ini = join( env.subst("$PROJECT_DIR"), 'platformio.ini' )
     f = open(ini, "r")
     txt = f.read()
     f.close()
     f = open(ini, "a+")
     if 'monitor_port'  not in txt: f.write("\n;monitor_port = SELECT SERIAL PORT\n")
-    if 'monitor_speed' not in txt: f.write(";monitor_speed = 115200\n")
-    if 'build_flags'   not in txt: f.write("\n;build_flags = \n")
+    if 'monitor_speed' not in txt: f.write(";monitor_speed = 115200\n")    
     if 'lib_deps'      not in txt: f.write("\n;lib_deps = \n")
+    if True == env.wifi:
+        if 'build_flags' not in txt: f.write("\n;build_flags = \n")
+    else:
+        if 'build_flags' not in txt: f.write("\nbuild_flags = -D PICO_CYW43_ARCH_POLL ; select wifi driver mode\n")
     f.close()
 
 def dev_create_template(env):
@@ -85,6 +90,7 @@ def dev_nano(env):
 def dev_compiler(env, application_name = 'APPLICATION'):
     env.sdk = env.BoardConfig().get("build.sdk", "SDK") # get/set default SDK
     env.variant = env.BoardConfig().get("build.variant", 'raspberry-pi-pico')
+    env.wifi = env.BoardConfig().get("build.WIFI", False )
     print()
     print( Fore.BLUE + "%s RASPBERRYPI PI PICO RP2040 ( PICO - %s )" % (env.platform.upper(), env.sdk.upper()) )
     env.Replace(
@@ -191,6 +197,8 @@ def dev_compiler(env, application_name = 'APPLICATION'):
         ),
         UPLOADCMD = dev_uploader
     )
+    if False == env.wifi:
+        env.Append( CPPDEFINES = [ "PICO_WIFI" ] )    
 
 def add_libraries(env): # is PIO LIB-s
     if "freertos" in env.GetProjectOption("lib_deps", []) or "USE_FREERTOS" in env.get("CPPDEFINES"):
@@ -252,9 +260,7 @@ def dev_config_board(env):
     src = join(env.PioPlatform().get_package_dir("framework-wizio-pico"), "templates")
     dst = do_mkdir( env.subst("$PROJECT_DIR"), "include" )
 
-    WIFI = env.BoardConfig().get("build.autogen_board", False )
-
-    if False == WIFI: 
+    if False == env.wifi:
         print("  * WIFI         : NO")
         return
     ### pico w board
