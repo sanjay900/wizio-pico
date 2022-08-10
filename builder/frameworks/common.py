@@ -56,16 +56,14 @@ def dev_create_template(env):
             do_copy(src, dst, "ffconf.h")
 
         dst = do_mkdir( env.subst("$PROJECT_DIR"), join("include", "pico") )
-        #do_copy(src, dst, "config_autogen.h" )
         autogen_filename = join(dst, "config_autogen.h")
         if False == os.path.isfile( autogen_filename ):
             default_board = "pico.h"
             autogen_board = env.BoardConfig().get("build.autogen_board", default_board )
-            if autogen_board != default_board:
-                f = open(autogen_filename, "w")
-                f.write("/* SELECT OTHER BOARD */\n")
-                f.write('#include "boards/{}"\n'.format(autogen_board))
-                f.close()
+            f = open(autogen_filename, "w")
+            f.write("/* SELECT OTHER BOARD */\n")
+            f.write('#include "boards/{}"\n'.format(autogen_board))
+            f.close()
 
         dst = join(env.subst("$PROJECT_DIR"), "src")
         if False == os.path.isfile( join(dst, "main.cpp") ):
@@ -196,7 +194,7 @@ def dev_compiler(env, application_name = 'APPLICATION'):
 
 def add_libraries(env): # is PIO LIB-s
     if "freertos" in env.GetProjectOption("lib_deps", []) or "USE_FREERTOS" in env.get("CPPDEFINES"):
-        env.Append(  CPPPATH = [ join(join(env.framework_dir, "library", "freertos"), "include") ]  )
+        env.Append(  CPPPATH = [ join( env.framework_dir, "library", "freertos", "include" ), ]  )
         print('  * RTOS         : FreeRTOS')
         if "USE_FREERTOS" not in env.get("CPPDEFINES"):
             env.Append(  CPPDEFINES = [ "USE_FREERTOS"] )
@@ -338,4 +336,3 @@ def dev_config_board(env):
             LIBPATH = [ join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src" ) ], 
             LIBS = ['wifi_firmware'] 
         )
-
