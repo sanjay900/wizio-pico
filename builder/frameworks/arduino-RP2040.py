@@ -25,13 +25,10 @@ def dev_init(env, platform):
         LIBSOURCE_DIRS = [ join(PLATFORM_DIR, "libraries", core) ],
         LIBPATH        = [ join(PLATFORM_DIR, "libraries", core) ],
     )
-
     dev_config_board(env)
-
     OBJ_DIR = join( "$BUILD_DIR", platform, "arduino" )
     env.BuildSources( join( OBJ_DIR, "arduino" ), join( PLATFORM_DIR, platform )  )
     env.BuildSources( join( OBJ_DIR, "core" ),    join( PLATFORM_DIR, "cores", core ) )
     env.BuildSources( join( OBJ_DIR, "variant" ), join( PLATFORM_DIR, "variants", variant )  )
-    
     dev_finalize(env)
-
+    

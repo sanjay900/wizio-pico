@@ -18,4 +18,3 @@ def dev_init(env, platform):
     )
     dev_config_board(env)
     dev_finalize(env)
-
