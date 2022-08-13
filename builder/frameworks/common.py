@@ -88,6 +88,7 @@ def dev_nano(env):
     return nano
 
 def dev_compiler(env, application_name = 'APPLICATION'):
+    env["FRAMEWORK_DIR"] = env.framework_dir
     env.sdk = env.BoardConfig().get("build.sdk", "SDK") # get/set default SDK
     env.variant = env.BoardConfig().get("build.variant", 'raspberry-pi-pico')
     env.wifi = env.BoardConfig().get("build.WIFI", False )
@@ -254,6 +255,7 @@ def dev_finalize(env):
     add_bynary_type(env)
     add_sdk(env)
     env.Append(LIBS = env.libs)
+    dev_add_modules(env)
     print()
 
 def dev_config_board(env):
@@ -342,3 +344,21 @@ def dev_config_board(env):
             LIBPATH = [ join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src" ) ], 
             LIBS = ['wifi_firmware'] 
         )
+        
+# EXPERIMENTAL FEATURE
+# Add & Compile not compiled sources with main builder
+# NOT TESTED YET ... [INI] board_build.modules = $FRAMEWORK_DIR/any-folder/module-drive-rover-on-mars/build.py
+from importlib.machinery import SourceFileLoader
+def dev_add_modules(env): 
+    names = env.BoardConfig().get("build.modules", "0")
+    if '0' == names: return 
+    print("MODULES: ")     
+    for line in names.split():
+        module_path = env.subst( line ).replace("\\", "/")
+        if True == os.path.isdir( module_path ):  # if module_path is folder only - use default name "build.py"
+            module_path = join(module_path, "build.py")
+        module_name = 'module_' + module_path.replace('\\', '_').replace('/', '_').replace('.', '_').replace(':', '_').replace('-', '_')     
+        if True == os.path.isfile( module_path ):
+            m = SourceFileLoader(module_name, module_path).load_module()
+            m.module_init(env)
+        else: print("  [WARNING] Module not exist:", module_path)
