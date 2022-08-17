@@ -334,7 +334,7 @@ def dev_uploader(target, source, env):
     outbuf = convert_to_uf2(inpbuf)
     time.sleep(.1)
     write_file(uf2_name, outbuf) # write uf2 to build folder
-    drives = get_drives()\
+    drives = get_drives()
     if drive:
         drives = [drive]
     if len(drives) == 0:
