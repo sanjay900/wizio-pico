@@ -335,6 +335,8 @@ def dev_uploader(target, source, env):
     time.sleep(.1)
     write_file(uf2_name, outbuf) # write uf2 to build folder
     drives = get_drives()
+    if drive:
+        drives = [drive]
     if len(drives) == 0:
         #raise RuntimeError("Pico USB drive not found.")
         print("\033[1;37;41m                               ")

@@ -1,20 +1,23 @@
-# WizIO 2021 Georgi Angelov
+# WizIO 2022 Georgi Angelov
 #   http://www.wizio.eu/
 #   https://github.com/Wiz-IO/wizio-pico
 
+from distutils.log import error
 import os
-from os.path import join, normpath, basename
+from os.path import join
 from shutil import copyfile
 from colorama import Fore
 from pico import *
 from uf2conv import dev_uploader
-from SCons.Script import DefaultEnvironment, Builder, ARGUMENTS
+from SCons.Script import Builder
 
 bynary_type_info = []
 
 def do_copy(src, dst, name):
-    if False == os.path.isfile( join(dst, name) ):
-        copyfile( join(src, name), join(dst, name) )
+    file_name = join(dst, name)
+    if False == os.path.isfile( file_name ):
+        copyfile( join(src, name), file_name )
+    return file_name
 
 def do_mkdir(path, name):
     dir = join(path, name)
@@ -26,16 +29,19 @@ def do_mkdir(path, name):
             exit(1)
     return dir
 
-def ini_file(env):
-    ini = join(env.subst("$PROJECT_DIR"), 'platformio.ini')
+def ini_file(env): # add defaut keys
+    ini = join( env.subst("$PROJECT_DIR"), 'platformio.ini' )
     f = open(ini, "r")
     txt = f.read()
     f.close()
     f = open(ini, "a+")
-    if 'monitor_port'  not in txt: f.write("\n;monitor_port = SERIAL_PORT\n")
-    if 'monitor_speed' not in txt: f.write(";monitor_speed = 115200\n")
-    if 'build_flags'   not in txt: f.write("\n;build_flags = \n")
+    if 'monitor_port'  not in txt: f.write("\n;monitor_port = SELECT SERIAL PORT\n")
+    if 'monitor_speed' not in txt: f.write(";monitor_speed = 115200\n")    
     if 'lib_deps'      not in txt: f.write("\n;lib_deps = \n")
+    if True == env.wifi:
+        if 'build_flags' not in txt: f.write("\n;build_flags = \n")
+    else:
+        if 'build_flags' not in txt: f.write("\nbuild_flags = -D PICO_CYW43_ARCH_POLL ; select wifi driver mode\n")
     f.close()
 
 def dev_create_template(env):
@@ -53,8 +59,17 @@ def dev_create_template(env):
     if 'APPLICATION'== env.get("PROGNAME"):
         if "fatfs" in env.GetProjectOption("lib_deps", []):
             do_copy(src, dst, "ffconf.h")
+
         dst = do_mkdir( env.subst("$PROJECT_DIR"), join("include", "pico") )
-        do_copy(src, dst, "config_autogen.h" )
+        autogen_filename = join(dst, "config_autogen.h")
+        if False == os.path.isfile( autogen_filename ):
+            default_board = "pico.h"
+            autogen_board = env.BoardConfig().get("build.autogen_board", default_board )
+            f = open(autogen_filename, "w")
+            f.write("/* SELECT OTHER BOARD */\n")
+            f.write('#include "boards/{}"\n'.format(autogen_board))
+            f.close()
+
         dst = join(env.subst("$PROJECT_DIR"), "src")
         if False == os.path.isfile( join(dst, "main.cpp") ):
             do_copy(src, dst, "main.c" )
@@ -73,8 +88,10 @@ def dev_nano(env):
     return nano
 
 def dev_compiler(env, application_name = 'APPLICATION'):
+    env["FRAMEWORK_DIR"] = env.framework_dir
     env.sdk = env.BoardConfig().get("build.sdk", "SDK") # get/set default SDK
     env.variant = env.BoardConfig().get("build.variant", 'raspberry-pi-pico')
+    env.wifi = env.BoardConfig().get("build.WIFI", False )
     print()
     print( Fore.BLUE + "%s RASPBERRYPI PI PICO RP2040 ( PICO - %s )" % (env.platform.upper(), env.sdk.upper()) )
     env.Replace(
@@ -109,7 +126,7 @@ def dev_compiler(env, application_name = 'APPLICATION'):
     else:
         print('  * STACK        :', stack_size)
         print('  * HEAP         :', env.heap_size)
-    fix_old_new_stdio(env)
+    #fix_old_new_stdio(env)
     env.Append(
         ASFLAGS=[ cortex, "-x", "assembler-with-cpp" ],
         CPPPATH = [
@@ -181,10 +198,12 @@ def dev_compiler(env, application_name = 'APPLICATION'):
         ),
         UPLOADCMD = dev_uploader
     )
+    if False == env.wifi:
+        env.Append( CPPDEFINES = [ "PICO_WIFI" ] )    
 
 def add_libraries(env): # is PIO LIB-s
     if "freertos" in env.GetProjectOption("lib_deps", []) or "USE_FREERTOS" in env.get("CPPDEFINES"):
-        env.Append(  CPPPATH = [ join(join(env.framework_dir, "library", "freertos"), "include") ]  )
+        env.Append(  CPPPATH = [ join( env.framework_dir, "library", "freertos", "include" ), ]  )
         print('  * RTOS         : FreeRTOS')
         if "USE_FREERTOS" not in env.get("CPPDEFINES"):
             env.Append(  CPPDEFINES = [ "USE_FREERTOS"] )
@@ -236,21 +255,18 @@ def dev_finalize(env):
     add_bynary_type(env)
     add_sdk(env)
     env.Append(LIBS = env.libs)
+    dev_add_modules(env)
     print()
 
-def config_board(env):
+def dev_config_board(env):
     src = join(env.PioPlatform().get_package_dir("framework-wizio-pico"), "templates")
     dst = do_mkdir( env.subst("$PROJECT_DIR"), "include" )
 
-    ### default pico board
-    if env.variant == "raspberry-pi-pico": 
-        print("  * VARIANT      : PICO DEFAULT BOARD")
+    if False == env.wifi:
+        print("  * WIFI         : NO")
         return
-
     ### pico w board
-    if env.variant == "raspberry-pi-pico-w":
-        print("  * VARIANT      : PICO WIFI BOARD")
-
+    else:
         do_copy(src, dst, "lwipopts.h") # for user edit
 
         env.Append(
@@ -263,56 +279,86 @@ def config_board(env):
         )
 
         ### pico wifi support
-        filter = [ "-<*>", 
-            "+<pico/pico_cyw43_arch>", 
-            "+<pico/pico_lwip>", 
-        ]
         env.BuildSources( 
-            join( "$BUILD_DIR", env.platform, env.sdk, "network" ), 
+            join( "$BUILD_DIR", "wifi", "pico" ), 
             join(env.framework_dir, env.sdk), 
-            src_filter = filter )
-
-
-        ### TODO LWIP
-        filter = [ "-<*>", 
-            "+<api>",
-            "+<core>",
-            "+<netif>",                  
-        ]
-        env.BuildSources( 
-            join( "$BUILD_DIR", env.platform, "lwip" ),
-            join( env.framework_dir, env.sdk, "lib", "lwip", "src" ), 
-            src_filter = filter 
+            [ "-<*>", "+<pico/pico_cyw43_arch>", "+<pico/pico_lwip>", ]
         )
 
-        ### wifi driver
-        filter = [ "+<*>", "-<cyw43_sdio.c>", ] # remove sdio driver
+        ### wifi spi driver & firmware
         env.BuildSources( 
-            join( "$BUILD_DIR", env.platform, "cyw43-driver" ), 
+            join( "$BUILD_DIR", "wifi" , "cyw43-driver" ), 
             join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src" ), 
-            src_filter = filter  
-        )
-        env.Append( # add wifi firmware as library  
-            LIBPATH = [ join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src" ) ],
-            LIBS    = ['wifi_firmware'] 
+            [ "+<*>", "-<cyw43_sdio.c>", ] # remove sdio driver  
         )
 
-  
-"""
-Precompile firmware bin to firmware object/library
+        ### LWIP: for add other files, use PRE:SCRIPT.PY
+        env.BuildSources( 
+            join( "$BUILD_DIR", env.platform, "lwip", "api" ),
+            join( env.framework_dir, env.sdk, "lib", "lwip", "src", "api" ), 
+        )
+        env.BuildSources( 
+            join( "$BUILD_DIR", env.platform, "lwip", "core" ),
+            join( env.framework_dir, env.sdk, "lib", "lwip", "src", "core" ), 
+            [ "+<*>",  "-<ipv6>", ] # remove ipv6
+        )
+        env.BuildSources( 
+            join( "$BUILD_DIR", env.platform, "lwip", "netif" ),
+            join( env.framework_dir, env.sdk, "lib", "lwip", "src", "netif" ), 
+            [ "-<*>", "+<ethernet.c>", ]
+        )        
 
-LINK https://github.com/raspberrypi/pico-sdk/blob/master/src/rp2_common/cyw43_driver/CMakeLists.txt  
-
-"PATH/arm-none-eabi-objcopy" ^
--I binary -O elf32-littlearm -B arm ^
---readonly-text ^
---rename-section .data=.big_const,contents,alloc,load,readonly,data ^
---redefine-sym _binary_43439A0_7_95_49_00_combined_start=fw_43439A0_7_95_49_00_start ^
---redefine-sym _binary_43439A0_7_95_49_00_combined_end=fw_43439A0_7_95_49_00_end ^
---redefine-sym _binary_43439A0_7_95_49_00_combined_size=fw_43439A0_7_95_49_00_size ^
-43439A0-7.95.49.00.combined ^
-wifi_firmware.o
-
-PATH/arm-none-eabi-ar rc libwifi_firmware.a wifi_firmware.o
-
-"""
+        ### wifi firmware object
+        """
+        BUILD_DIR = env.subst( "$BUILD_DIR" )
+        do_mkdir( BUILD_DIR, "wifi" )
+        do_mkdir( join( BUILD_DIR, "wifi" ), "firmware" )
+        WIFI_FIRMWARE_DIR = join( BUILD_DIR, "wifi", "firmware" )
+        WIFI_FIRMWARE_OBJ = join( WIFI_FIRMWARE_DIR, "wifi_firmware.o" ) 
+        WIFI_FIRMWARE_BIN = join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "firmware", "43439A0-7.95.49.00.combined" )
+        old_name = WIFI_FIRMWARE_BIN
+        old_name = '_binary_' + old_name.replace('\\', '_').replace('/', '_').replace('.', '_').replace(':', '_').replace('-', '_')
+        cmd = [ "$OBJCOPY", "-I", "binary", "-O", "elf32-littlearm", "-B", "arm", "--readonly-text",
+                "--rename-section", ".data=.big_const,contents,alloc,load,readonly,data",
+                "--redefine-sym", old_name + "_start=fw_43439A0_7_95_49_00_start",
+                "--redefine-sym", old_name + "_end=fw_43439A0_7_95_49_00_end",
+                "--redefine-sym", old_name + "_size=fw_43439A0_7_95_49_00_size",
+                WIFI_FIRMWARE_BIN, # SOURCE BIN
+                WIFI_FIRMWARE_OBJ  # TARGET OBJ
+        ]
+        env.AddPreAction( 
+                join( "$BUILD_DIR", "wifi" , "cyw43-driver", "cyw43_bus_pio_spi.o" ), # TRIGER
+                env.VerboseAction(" ".join(cmd), "Compiling wifi/firmware/wifi_firmware.o") 
+        )       
+        print( "  * WIFI         : Compile Firmware Object" )
+        env.Append( LINKFLAGS = [ WIFI_FIRMWARE_OBJ ] )
+        return
+        """
+        ### use pre-compiled wifi_firmware.o
+        print( "  * WIFI         : Firmware Object" )
+        env.Append( LINKFLAGS = [ join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src", "wifi_firmware.o" ) ] ) 
+        return
+        ### use pre-compiled libwifi_firmware.a
+        print( "  * WIFI         : Firmware Library" )
+        env.Append( # AS LIB
+            LIBPATH = [ join( env.framework_dir, env.sdk, "lib", "cyw43-driver", "src" ) ], 
+            LIBS = ['wifi_firmware'] 
+        )
+        
+# EXPERIMENTAL FEATURE
+# Add & Compile not compiled sources with main builder
+# NOT TESTED YET ... [INI] board_build.modules = $FRAMEWORK_DIR/any-folder/module-drive-rover-on-mars/build.py
+from importlib.machinery import SourceFileLoader
+def dev_add_modules(env): 
+    names = env.BoardConfig().get("build.modules", "0")
+    if '0' == names: return 
+    print("MODULES: ")     
+    for line in names.split():
+        module_path = env.subst( line ).replace("\\", "/")
+        if True == os.path.isdir( module_path ):  # if module_path is folder only - use default name "build.py"
+            module_path = join(module_path, "build.py")
+        module_name = 'module_' + module_path.replace('\\', '_').replace('/', '_').replace('.', '_').replace(':', '_').replace('-', '_')     
+        if True == os.path.isfile( module_path ):
+            m = SourceFileLoader(module_name, module_path).load_module()
+            m.module_init(env)
+        else: print("  [WARNING] Module not exist:", module_path)
