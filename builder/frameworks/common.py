@@ -345,29 +345,34 @@ def dev_config_board(env):
             LIBS = ['wifi_firmware'] 
         )
         
-# EXPERIMENTAL FEATURE
+# EXPERIMENTAL FEATURE: LOAD MODULES
+
 '''
 ### Add & Compile not compiled sources with main builder
 
-###[INI] custom_modules = $PROJECT_DIR/modules/MODULE_NAME.py = parameters if need
+###[INI] custom_modules = 
+    $PROJECT_DIR/modules/MODULE_SCRYPT.py = parameters if need
+    $PROJECT_DIR/any_folder_with_py_scripts
 
-### MOD_VERNO.py
+### example: MODULE_VERNO.py
 from os.path import join
 def module_init(env, parameter=''): # if parameter: string separated by space
     name = "verno"
     print( "  *", name.upper() ) # just info
     path = join( env.framework_dir, "sdk", "middleware", name)
-    env.Append( CPPPATH = [ join( path, "inc" ) ] )  # and other  
+    env.Append( CPPPATH = [ join( path, "inc" ) ] )    
     env.BuildSources( join( "$BUILD_DIR", "modules", name ), join( path, "src" ) )
 '''
 
 from importlib.machinery import SourceFileLoader
 
+# private 
 def dev_load_module(filename, params, env):
     name = 'module_' +  str( abs(hash( filename )) )
     m = SourceFileLoader(name, filename).load_module() 
     m.module_init( env, params )     
 
+# public: call it at builder end
 def dev_add_modules(env): 
     #lines = env.BoardConfig().get("build.modules", "0")
     lines = env.GetProjectOption("custom_modules", "0")
