@@ -3,8 +3,8 @@
 **A few words in the beginning**
 
 I won't add support for new SDK versions ( I don't have a muse )
-<br>Half a year ago I offered to Raspberry Pi ORG,
-<br>platform ( 90% ready ) to support [all their products](https://www.linkedin.com/posts/georgi-angelov-33aa43b0_platformio-activity-6992131002923905024-m2mP?utm_source=share&utm_medium=member_desktop) ( etc ... [Arduino](https://www.linkedin.com/posts/georgi-angelov-33aa43b0_platformio-arduino-raspberry-activity-6993604847698665472-xUBF?utm_source=share&utm_medium=member_desktop) [microPython](https://www.linkedin.com/posts/georgi-angelov-33aa43b0_platformio-micropython-activity-6990577993874067456-E1pO?utm_source=share&utm_medium=member_desktop) )
+<br>Half a year ago I offered to Raspberry Pi ORG
+<br>platform ( 90% ready ) to support [all their products](https://www.linkedin.com/posts/georgi-angelov-33aa43b0_platformio-activity-6992131002923905024-m2mP?utm_source=share&utm_medium=member_desktop) ( etc ... [Arduino](https://www.linkedin.com/posts/georgi-angelov-33aa43b0_platformio-arduino-raspberry-activity-6993604847698665472-xUBF?utm_source=share&utm_medium=member_desktop), [microPython](https://www.linkedin.com/posts/georgi-angelov-33aa43b0_platformio-micropython-activity-6990577993874067456-E1pO?utm_source=share&utm_medium=member_desktop) )
 <br>They still have no interest...
 
 * **Version: 1.1.1** The project is a work in progress, there may be bugs...
