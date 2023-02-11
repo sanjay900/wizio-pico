@@ -345,20 +345,59 @@ def dev_config_board(env):
             LIBS = ['wifi_firmware'] 
         )
         
-# EXPERIMENTAL FEATURE
-# Add & Compile not compiled sources with main builder
-# NOT TESTED YET ... [INI] board_build.modules = $FRAMEWORK_DIR/any-folder/module-drive-rover-on-mars/build.py
+# EXPERIMENTAL FEATURE: LOAD MODULES
+
+'''
+### Add & Compile not compiled sources with main builder
+
+###[INI] custom_modules = 
+    $PROJECT_DIR/modules/MODULE_SCRYPT.py = parameters if need
+    $PROJECT_DIR/any_folder_with_py_scripts
+
+### example: MODULE_VERNO.py
+from os.path import join
+def module_init(env, parameter=''): # if parameter: string separated by space
+    name = "verno"
+    print( "  *", name.upper() ) # just info
+    path = join( env.framework_dir, "sdk", "middleware", name)
+    env.Append( CPPPATH = [ join( path, "inc" ) ] )    
+    env.BuildSources( join( "$BUILD_DIR", "modules", name ), join( path, "src" ) )
+'''
+
 from importlib.machinery import SourceFileLoader
+
+# private 
+def dev_load_module(filename, params, env):
+    name = 'module_' +  str( abs(hash( filename )) )
+    m = SourceFileLoader(name, filename).load_module() 
+    m.module_init( env, params )     
+
+# public: call it at builder end
 def dev_add_modules(env): 
-    names = env.BoardConfig().get("build.modules", "0")
-    if '0' == names: return 
-    print("MODULES: ")     
-    for line in names.split():
-        module_path = env.subst( line ).replace("\\", "/")
-        if True == os.path.isdir( module_path ):  # if module_path is folder only - use default name "build.py"
-            module_path = join(module_path, "build.py")
-        module_name = 'module_' + module_path.replace('\\', '_').replace('/', '_').replace('.', '_').replace(':', '_').replace('-', '_')     
-        if True == os.path.isfile( module_path ):
-            m = SourceFileLoader(module_name, module_path).load_module()
-            m.module_init(env)
-        else: print("  [WARNING] Module not exist:", module_path)
+    #lines = env.BoardConfig().get("build.modules", "0")
+    lines = env.GetProjectOption("custom_modules", "0")
+    if '0' != lines: 
+        print("Project Modules:")  
+        for line in lines.split("\n"):
+            if line == '': continue
+            ### Cleaning the INI line
+            line = line.strip().replace("\r", "").replace("\t", "")
+            delim = '='  # for parameters
+            params = ''  # from ini line
+            if delim in line:
+                params = line[ line.index( delim ) + 1 : ].strip()  # remove delim and whitespaces
+                params = " ".join( params.split() )                 # remove double spaces, params are separated by a space   
+                line = line.partition( delim )[0].strip()           # remove delim and whitespaces
+            module_path = env.subst( line ).strip().replace("\\", "/")
+            ### Loading
+            if False == os.path.exists(module_path):
+                print("[ERROR] MODULE PATH NOT EXIST: %s" % module_path)
+                exit(0)
+            if True == os.path.isdir( module_path ):  # files in folder
+                for root, dirs, files in os.walk( module_path ):                       
+                    files = [ f for f in files if f.endswith(".py") ] # filter py files
+                    for file in files: 
+                        dev_load_module( join(root, file), params, env)
+            else: # single file
+                dev_load_module( module_path, params, env)
+   
