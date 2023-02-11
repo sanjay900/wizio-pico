@@ -19,8 +19,6 @@ I won't add support for new SDK versions ( > 1.40 ) - I don't have a muse...
 * **Debug** ( in progress... )
 * * [PICOPROBE](https://github.com/Wiz-IO/wizio-pico/wiki/DEBUG#picoprobe) ( Windows for now )
 * * CMSIS-DAP [( Windows for now )](https://www.youtube.com/watch?v=SdpsmgRp5Co)
-* **Libraries** [FreeRTOS](https://github.com/Wiz-IO/wizio-pico/wiki/COMMON#freertos), FatFS, littlefs ... etc
-* Basic **[File System](https://github.com/Wiz-IO/wizio-pico/wiki/COMMON#file-system--vfs--virtual-file-system-)** ( RAM disk, FLASH disk, SD card )
 * [**READ WIKI**](https://github.com/Wiz-IO/wizio-pico/wiki/) 
 * [Framework code](https://github.com/Wiz-IO/framework-wizio-pico)
 * [Baremetal Examples](https://github.com/Wiz-IO/wizio-pico-examples/tree/main/baremetal)
