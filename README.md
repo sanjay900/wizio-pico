@@ -11,7 +11,7 @@ I won't add support for new SDK versions ( > 1.40 ) - I don't have a muse...
 * [Look here, if there is something new](https://github.com/Wiz-IO/wizio-pico/wiki#last-news) 
 * This project is based on [**PICO-SDK**](https://github.com/raspberrypi/pico-sdk)
 * **PICO-SDK** _( the file organization has been restructured to be flexible and have a fast compilation )_
-* * **default SDK 1.4.0** ( backup  1.3.1 ) 
+* * **default SDK 1.4.0** 
 * * Support and Pico W ( WiFi ) board - not tested
 * **Frameworks**
 * * Baremetal ( pico-sdk, C/C++ ) _baremetal is just a name for pico-sdk here_
